@@ -96,3 +96,8 @@ In full mode the agent additionally calls `get_case` on the top precedents and p
 ```bash
 npx wrangler deploy
 ```
+
+
+## Add a copy-paste quickstart to the README
+
+Documentation reference and guidelines for #1.
