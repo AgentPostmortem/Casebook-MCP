@@ -155,6 +155,10 @@ export async function handleMcpRequest(request: Request): Promise<Response> {
     return jsonRpcError(null, -32700, "Parse error");
   }
 
+  if (Array.isArray(body) && body.length === 0) {
+    return jsonRpcError(null, -32600, "Invalid Request");
+  }
+
   const requests = Array.isArray(body) ? body : [body];
   const responses: unknown[] = [];
 
