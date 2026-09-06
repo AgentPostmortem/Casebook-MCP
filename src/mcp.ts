@@ -74,7 +74,10 @@ function isObject(value: unknown): value is Record<string, unknown> {
 async function callTool(name: string, args: Record<string, unknown>) {
   switch (name) {
     case "search_cases": {
-      const query = String(args.query ?? "");
+      if (typeof args.query !== "string" || args.query.trim().length === 0) {
+        throw { code: -32602, message: "query must be a non-empty string" };
+      }
+      const query = args.query.trim();
       const tag = args.tag ? String(args.tag) : undefined;
       const { cases, source } = await getCorpus();
       const results = searchCases(cases, query, { tag });
