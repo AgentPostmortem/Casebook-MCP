@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { handleMcpRequest } from "../src/mcp";
 
 function postJson(body: unknown): Request {
@@ -31,6 +31,27 @@ describe("handleMcpRequest batches", () => {
 
     expect(response.status).toBe(202);
     expect(await response.text()).toBe("");
+  });
+
+  it("rejects batches above 100 requests before dispatch", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const requests = Array.from({ length: 101 }, (_, index) => ({
+      jsonrpc: "2.0",
+      id: index + 1,
+      method: "tools/call",
+      params: { name: "search_cases", arguments: { query: "refund" } },
+    }));
+
+    const response = await handleMcpRequest(postJson(requests));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      jsonrpc: "2.0",
+      id: null,
+      error: { code: -32600, message: "Invalid Request" },
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
   });
 });
 

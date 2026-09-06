@@ -4,6 +4,7 @@ import { getCorpus, getCaseDetail, getTags } from "./data";
 import { searchCases, similarCases, summarize } from "./search";
 
 const PROTOCOL_VERSION = "2025-03-26";
+const MAX_BATCH_SIZE = 100;
 
 interface JsonRpcRequest {
   jsonrpc: "2.0";
@@ -164,6 +165,10 @@ export async function handleMcpRequest(request: Request): Promise<Response> {
   }
 
   if (Array.isArray(body) && body.length === 0) {
+    return jsonRpcError(null, -32600, "Invalid Request");
+  }
+
+  if (Array.isArray(body) && body.length > MAX_BATCH_SIZE) {
     return jsonRpcError(null, -32600, "Invalid Request");
   }
 
