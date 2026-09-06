@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { handleMcpRequest } from "../src/mcp";
 
 function postJson(body: unknown): Request {
@@ -32,4 +32,33 @@ describe("handleMcpRequest batches", () => {
     expect(response.status).toBe(202);
     expect(await response.text()).toBe("");
   });
+});
+
+describe("search_cases input", () => {
+  it.each([{}, { query: "" }, { query: "   " }])(
+    "rejects a missing or empty query before loading the corpus",
+    async (arguments_) => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+      const response = await handleMcpRequest(
+        postJson({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "search_cases", arguments: arguments_ },
+        }),
+      );
+
+      const payload = await response.json();
+      const fetchCalls = fetchSpy.mock.calls.length;
+      fetchSpy.mockRestore();
+
+      expect(payload).toEqual({
+        jsonrpc: "2.0",
+        id: 1,
+        error: { code: -32602, message: "query must be a non-empty string" },
+      });
+      expect(fetchCalls).toBe(0);
+    },
+  );
 });

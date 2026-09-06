@@ -8,7 +8,7 @@ Why: every team debugging an agent incident is rediscovering failure modes that 
 
 | Tool | Purpose |
 | --- | --- |
-| `search_cases(query, tag?)` | Ranked full-text search over case files, optional tag filter |
+| `search_cases(query, tag?)` | Ranked full-text search over case files; `query` must be non-empty, with an optional tag filter |
 | `get_case(id)` | Full case detail: outcome, verified facts, unknowns, lessons |
 | `similar_failures(description)` | Keyword-similarity match of an incident against the corpus |
 | `list_tags()` | All failure-mode tags with descriptions |
