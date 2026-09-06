@@ -66,6 +66,10 @@ function textResult(payload: unknown) {
   };
 }
 
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 async function callTool(name: string, args: Record<string, unknown>) {
   switch (name) {
     case "search_cases": {
@@ -130,7 +134,11 @@ async function dispatch(req: JsonRpcRequest): Promise<unknown | null> {
       return { tools: TOOLS };
     case "tools/call": {
       const name = String(req.params?.name ?? "");
-      const args = (req.params?.arguments ?? {}) as Record<string, unknown>;
+      const suppliedArgs = req.params?.arguments;
+      if (suppliedArgs !== undefined && !isObject(suppliedArgs)) {
+        throw { code: -32602, message: "Invalid params" };
+      }
+      const args = suppliedArgs ?? {};
       return callTool(name, args);
     }
     default:

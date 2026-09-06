@@ -33,3 +33,25 @@ describe("handleMcpRequest batches", () => {
     expect(await response.text()).toBe("");
   });
 });
+
+describe("tools/call argument validation", () => {
+  it.each(["refund", 7, true, null, []])(
+    "returns Invalid params for non-object arguments: %j",
+    async (args) => {
+      const response = await handleMcpRequest(
+        postJson({
+          jsonrpc: "2.0",
+          id: 9,
+          method: "tools/call",
+          params: { name: "search_cases", arguments: args },
+        }),
+      );
+
+      expect(await response.json()).toEqual({
+        jsonrpc: "2.0",
+        id: 9,
+        error: { code: -32602, message: "Invalid params" },
+      });
+    },
+  );
+});

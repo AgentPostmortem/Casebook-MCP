@@ -30,6 +30,9 @@ dataset in data/ when offline.
 
 The MCP transport is implemented directly against the 2025-03-26 streamable HTTP spec in stateless mode: a single `POST /mcp` endpoint handling `initialize`, `tools/list`, and `tools/call`. No sessions, no Durable Objects, no auth (the data is public and read-only). A light in-memory rate limit (60 requests per minute per IP) keeps it polite.
 
+`tools/call` accepts an optional JSON object for `arguments`; arrays, scalar
+values, and `null` return JSON-RPC `-32602 Invalid params` before tool dispatch.
+
 ## Quickstart
 
 ```bash
