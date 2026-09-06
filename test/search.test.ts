@@ -5,6 +5,11 @@ import type { CaseFile } from "../src/types";
 import cases from "../data/cases.json";
 
 const corpus = cases as CaseFile[];
+const manyMatchingCases = Array.from({ length: 60 }, (_, index) => ({
+  ...corpus[0],
+  caseNumber: `CB-${String(index + 1).padStart(4, "0")}`,
+  title: `Agent failure ${index + 1}`,
+}));
 
 describe("tokenize", () => {
   it("lowercases, splits, and drops stopwords and short tokens", () => {
@@ -37,6 +42,14 @@ describe("searchCases ranking", () => {
 
   it("limits results", () => {
     expect(searchCases(corpus, "agent", { limit: 3 }).length).toBeLessThanOrEqual(3);
+  });
+
+  it.each([
+    { limit: -5, expected: 1 },
+    { limit: 1e9, expected: 50 },
+    { limit: Number.NaN, expected: 10 },
+  ])("normalizes a $limit limit to $expected results", ({ limit, expected }) => {
+    expect(searchCases(manyMatchingCases, "agent", { limit })).toHaveLength(expected);
   });
 });
 
@@ -71,6 +84,14 @@ describe("similarCases", () => {
   it("caps the number of matches", () => {
     const matches = similarCases(corpus, "agent failure production data", 2);
     expect(matches.length).toBeLessThanOrEqual(2);
+  });
+
+  it.each([
+    { limit: -5, expected: 1 },
+    { limit: 1e9, expected: 50 },
+    { limit: Number.NaN, expected: 5 },
+  ])("normalizes a $limit limit to $expected matches", ({ limit, expected }) => {
+    expect(similarCases(manyMatchingCases, "agent", limit)).toHaveLength(expected);
   });
 });
 

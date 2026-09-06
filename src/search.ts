@@ -26,6 +26,18 @@ function caseText(c: CaseFile): string {
   ].join(" ");
 }
 
+const MIN_SEARCH_LIMIT = 1;
+const MAX_SEARCH_LIMIT = 50;
+
+/** Normalize a result limit to the supported inclusive 1..50 range. */
+function normalizeLimit(limit: number, defaultLimit: number): number {
+  if (Number.isNaN(limit)) return defaultLimit;
+  return Math.min(
+    MAX_SEARCH_LIMIT,
+    Math.max(MIN_SEARCH_LIMIT, Math.trunc(limit)),
+  );
+}
+
 /**
  * Score a case against query tokens. Title hits weigh 3, tag hits 2,
  * body hits 1. Returns 0 when nothing matches.
@@ -55,6 +67,7 @@ export function searchCases(
   opts: SearchOptions = {},
 ): CaseFile[] {
   const tokens = tokenize(query);
+  const limit = normalizeLimit(opts.limit ?? 10, 10);
   let pool = cases;
   if (opts.tag) {
     const tag = opts.tag.toLowerCase();
@@ -66,7 +79,7 @@ export function searchCases(
     .sort(
       (a, b) => b.score - a.score || a.c.caseNumber.localeCompare(b.c.caseNumber),
     );
-  return scored.slice(0, opts.limit ?? 10).map((s) => s.c);
+  return scored.slice(0, limit).map((s) => s.c);
 }
 
 /** Keyword-overlap similarity for similar_failures. */
@@ -76,6 +89,7 @@ export function similarCases(
   limit = 5,
 ): { case: CaseFile; overlap: string[] }[] {
   const tokens = new Set(tokenize(description));
+  const normalizedLimit = normalizeLimit(limit, 5);
   return cases
     .map((c) => {
       const caseTokens = new Set(tokenize(caseText(c)));
@@ -88,7 +102,7 @@ export function similarCases(
         b.overlap.length - a.overlap.length ||
         a.case.caseNumber.localeCompare(b.case.caseNumber),
     )
-    .slice(0, limit);
+    .slice(0, normalizedLimit);
 }
 
 export function summarize(c: CaseFile) {
