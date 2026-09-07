@@ -116,4 +116,22 @@ describe("CSV export parsing", () => {
       outcome: "It failed, badly",
     });
   });
+
+  it("sanitizes non-numeric damage/cost columns and rejects rows missing case_number", () => {
+    const invalidValuesCsv =
+      "case_number,title,agent,damage_level,estimated_cost_usd,tags,outcome\n" +
+      'APM-0002,Invalid numbers test,Claude,garbage,N/A,tag1,"Failed"';
+    const parsedInvalid = casesFromExportCsv(invalidValuesCsv);
+    expect(parsedInvalid).toHaveLength(1);
+    expect(parsedInvalid[0].damageLevel).toBe(0);
+    expect(parsedInvalid[0].estimatedCostUsd).toBeNull();
+    expect(Number.isNaN(parsedInvalid[0].damageLevel)).toBe(false);
+    expect(Number.isNaN(parsedInvalid[0].estimatedCostUsd)).toBe(false);
+
+    const missingCaseNumCsv =
+      "title,agent,damage_level,estimated_cost_usd,tags,outcome\n" +
+      'No case number header,Claude,3,1200,tag1,"Failed"';
+    const parsedMissing = casesFromExportCsv(missingCaseNumCsv);
+    expect(parsedMissing).toHaveLength(0);
+  });
 });
