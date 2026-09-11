@@ -79,21 +79,61 @@ export function casesFromExportCsv(csv: string): CaseFile[] {
   if (rows.length < 2) return [];
   const header = rows[0];
   const idx = (name: string) => header.indexOf(name);
-  return rows.slice(1).map((r) => ({
-    caseNumber: r[idx("case_number")] ?? "",
-    title: r[idx("title")] ?? "",
-    agentName: r[idx("agent")] ?? "Unknown",
-    damageLevel: parseInt(r[idx("damage_level")] ?? "0", 10) || 0,
-    estimatedCostUsd: r[idx("estimated_cost_usd")]
-      ? Number(r[idx("estimated_cost_usd")])
-      : null,
-    tags: (r[idx("tags")] ?? "").split("|").filter(Boolean),
-    outcome: r[idx("outcome")] ?? "",
-    verifiedFacts: [],
-    unknowns: [],
-    lessons: [],
-    createdAt: r[idx("created_at")] || undefined,
-  }));
+  const caseNumIdx = idx("case_number");
+  const titleIdx = idx("title");
+  const agentIdx = idx("agent");
+  const damageIdx = idx("damage_level");
+  const costIdx = idx("estimated_cost_usd");
+  const tagsIdx = idx("tags");
+  const outcomeIdx = idx("outcome");
+  const createdIdx = idx("created_at");
+
+  const cases: CaseFile[] = [];
+
+  for (const r of rows.slice(1)) {
+    const rawCaseNumber = caseNumIdx !== -1 ? r[caseNumIdx] : undefined;
+    const caseNumber = (rawCaseNumber ?? "").trim();
+    if (!caseNumber) continue;
+
+    const rawTitle = titleIdx !== -1 ? r[titleIdx] : undefined;
+    const title = (rawTitle ?? "").trim();
+
+    const rawAgent = agentIdx !== -1 ? r[agentIdx] : undefined;
+    const agentName = (rawAgent ?? "").trim() || "Unknown";
+
+    const rawDamage = damageIdx !== -1 ? r[damageIdx] : undefined;
+    const parsedDamage = parseInt((rawDamage ?? "").trim(), 10);
+    const damageLevel = Number.isNaN(parsedDamage) ? 0 : parsedDamage;
+
+    const rawCost = costIdx !== -1 ? r[costIdx] : undefined;
+    const parsedCost = rawCost !== undefined && rawCost.trim() !== "" ? Number(rawCost) : NaN;
+    const estimatedCostUsd = Number.isNaN(parsedCost) ? null : parsedCost;
+
+    const rawTags = tagsIdx !== -1 ? r[tagsIdx] : undefined;
+    const tags = (rawTags ?? "").split("|").filter(Boolean);
+
+    const rawOutcome = outcomeIdx !== -1 ? r[outcomeIdx] : undefined;
+    const outcome = (rawOutcome ?? "").trim();
+
+    const rawCreated = createdIdx !== -1 ? r[createdIdx] : undefined;
+    const createdAt = (rawCreated ?? "").trim() || undefined;
+
+    cases.push({
+      caseNumber,
+      title,
+      agentName,
+      damageLevel,
+      estimatedCostUsd,
+      tags,
+      outcome,
+      verifiedFacts: [],
+      unknowns: [],
+      lessons: [],
+      createdAt,
+    });
+  }
+
+  return cases;
 }
 
 /** Full corpus: live export feed when reachable, bundled dataset otherwise. */
